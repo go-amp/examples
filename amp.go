@@ -1,22 +1,29 @@
 package main
 
-import "go/cmn"
-import "go/amp"
-//import "runtime"
+import "log"
+import "github.com/go-amp/amp"
+import "runtime"
 import "strconv"
 import "flag"
 import "fmt"
-//import "time"
+import "time"
+
+func KeepAlive() {
+    for { 
+        runtime.Gosched()
+        time.Sleep(1 * time.Second) 
+    }
+}
 
 func SumRespond(self *amp.Command) {
     for {        
         ask := <- self.Responder
-        //cmn.Log(ask)
+        //log.Println(ask)
         m := *ask.Arguments        
         a, _ := strconv.Atoi(m["a"])
         b, _ := strconv.Atoi(m["b"])
         total := a + b        
-        cmn.Log("SumRespond:",a,"+",b,"=",total)
+        log.Println("SumRespond:",a,"+",b,"=",total)
         answer := *ask.Response
         answer["total"] = strconv.Itoa(total)
         ask.Reply()        
@@ -37,13 +44,13 @@ func BuildSumCommand() *amp.Command {
 }
 
 func server() {
-    cmn.Log("Hello Server!")    
+    log.Println("Hello Server!")    
     commands := make(map[string]*amp.Command)
     sum := BuildSumCommand()
     commands[sum.Name] = sum
     prot := amp.Init(&commands)    
-    err := prot.ListenTCP(":8000")
-    if err != nil { cmn.Log(err) } else { cmn.KeepAlive() }
+    err := prot.ListenTCP("127.0.0.1:8000")
+    if err != nil { log.Println(err) } else { KeepAlive() }
 }
 
 func RemoteSum(a int, b int, c *amp.Connection, command *amp.Command) (string, error) {
@@ -58,25 +65,25 @@ func RemoteSum(a int, b int, c *amp.Connection, command *amp.Command) (string, e
 
 func RemoteTrap(reply chan *amp.AnswerBox) {    
     answer := <-reply
-    cmn.Log("RemoteTrap",*answer.Response)
+    log.Println("RemoteTrap",*answer.Response)
 }
 
 func client() {
-    cmn.Log("Hello Client!")    
+    log.Println("Hello Client!")    
     commands := make(map[string]*amp.Command)
     sum := BuildSumCommand()
     commands[sum.Name] = sum
     prot := amp.Init(&commands)
     c, err := prot.ConnectTCP("127.0.0.1:8000")
-    if err != nil { cmn.Log(err) } else {         
+    if err != nil { log.Println(err) } else {         
         for i := 0; i < 100; i++ {
             tag, err := RemoteSum(i, i*5, c, sum)
             if err != nil { break }
-            cmn.Log(fmt.Sprintf("%s: ",tag),"CallRemote",i,i*5)
+            log.Println(fmt.Sprintf("%s: ",tag),"CallRemote",i,i*5)
             //time.Sleep(300 * time.Millisecond)            
             
         }
-        cmn.KeepAlive() 
+        KeepAlive() 
     }
     
 }
