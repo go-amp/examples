@@ -39,10 +39,10 @@ class Client():
     def connected(self, p):
         print 'sending..'
         p.callRemote(Sum, a=333, b=333).addCallback(self.got_sum)
-        for i in xrange(20):
+        for i in xrange(100):
             yield
             print 'sending again..'
-            p.callRemote(Sum, a=111, b=111).addCallback(self.got_sum)
+            p.callRemote(Sum, a=i, b=1).addCallback(self.got_sum)
             #p.transport.loseConnection()
   
     def got_sum(self, result):

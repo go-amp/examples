@@ -5,7 +5,7 @@ import "github.com/go-amp/amp"
 import "runtime"
 import "strconv"
 import "flag"
-import "fmt"
+//import "fmt"
 import "time"
 
 func KeepAlive() {
@@ -13,6 +13,12 @@ func KeepAlive() {
         runtime.Gosched()
         time.Sleep(1 * time.Second) 
     }
+}
+
+func init() {
+    procs := runtime.NumCPU()
+    log.Println("setting number procs to",procs)
+    runtime.GOMAXPROCS(procs)
 }
 
 func SumRespond(self *amp.Command) {
@@ -26,7 +32,9 @@ func SumRespond(self *amp.Command) {
         log.Println("SumRespond:",a,"+",b,"=",total)
         answer := *ask.Response
         answer["total"] = strconv.Itoa(total)
-        ask.Reply()        
+        log.Println("SumRespond sending",ask)
+        ask.ReplyChannel <- ask       
+        //runtime.Gosched()
     }
 }
 
@@ -37,7 +45,7 @@ func BuildSumCommand() *amp.Command {
     arguments := [2]string{ "a", "b" }
     response := [1]string{ "total" }    
     name := "Sum"
-    responder := make(chan *amp.AskBox)
+    responder := make(chan *amp.Ask, 100)
     sumCommand := &amp.Command{name, responder, arguments[:], response[:]}    
     go SumRespond(sumCommand)
     return sumCommand
@@ -53,19 +61,26 @@ func server() {
     if err != nil { log.Println(err) } else { KeepAlive() }
 }
 
-func RemoteSum(a int, b int, c *amp.Connection, command *amp.Command) (string, error) {
-    m := make(map[string]string)
+func RemoteSum(a int, b int, c *amp.Client, command *amp.Command) (string, error) {
+    callbox := amp.ResourceCallBox()    
+    m := *callbox.Arguments    
     m["a"] = strconv.Itoa(a)
     m["b"] = strconv.Itoa(b)    
-    reply := make(chan *amp.AnswerBox) 
+    reply := make(chan *amp.CallBox) 
     go RemoteTrap(reply)   
-    tag, err := c.CallRemote(command, &m, reply)        
+    callbox.Callback = reply
+    callbox.Command = command    
+    log.Println("CallRemote",callbox.Command.Name,*callbox.Arguments)
+    tag, err := c.CallRemote(callbox)         
     return tag, err
 }
 
-func RemoteTrap(reply chan *amp.AnswerBox) {    
+func RemoteTrap(reply chan *amp.CallBox) {
+    //log.Println("remote trapping",reply)    
     answer := <-reply
-    log.Println("RemoteTrap",*answer.Response)
+    log.Println("RemoteTrap",*answer.Response,"for",*answer.Arguments)
+    amp.RecycleCallBox(answer)
+    //log.Println("done recycling callbox")
 }
 
 func client() {
@@ -76,12 +91,10 @@ func client() {
     prot := amp.Init(&commands)
     c, err := prot.ConnectTCP("127.0.0.1:8000")
     if err != nil { log.Println(err) } else {         
-        for i := 0; i < 100; i++ {
-            tag, err := RemoteSum(i, i*5, c, sum)
-            if err != nil { break }
-            log.Println(fmt.Sprintf("%s: ",tag),"CallRemote",i,i*5)
-            //time.Sleep(300 * time.Millisecond)            
-            
+        for i := 1; i < 100; i++ {
+            log.Println("client iteration -",i)
+            _, err := RemoteSum(i, 1, c, sum)
+            if err != nil { log.Println(err); break }                   
         }
         KeepAlive() 
     }
