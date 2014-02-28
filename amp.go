@@ -91,7 +91,7 @@ func client() {
     prot := amp.Init(&commands)
     c, err := prot.ConnectTCP("127.0.0.1:8000")
     if err != nil { log.Println(err) } else {         
-        for i := 1; i < 100; i++ {
+        for i := 1; i < 1000000; i++ {
             log.Println("client iteration -",i)
             _, err := RemoteSum(i, 1, c, sum)
             if err != nil { log.Println(err); break }                   
