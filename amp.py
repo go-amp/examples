@@ -3,6 +3,11 @@ from twisted.protocols import amp
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Factory
 import sys
+import time
+
+num_requests = 100000
+received = 0
+start = time.time()
 
 def sleep(secs):
     d = defer.Deferred()
@@ -17,7 +22,7 @@ class Sum(amp.Command):
 class JustSum(amp.AMP):
        def sum(self, a, b):
            total = a + b
-           print 'Did a sum: %d + %d = %d' % (a, b, total)
+           #print 'Did a sum: %d + %d = %d' % (a, b, total)
            return {'total': total}
        Sum.responder(sum)
 
@@ -39,14 +44,23 @@ class Client():
     def connected(self, p):
         print 'sending..'
         p.callRemote(Sum, a=333, b=333).addCallback(self.got_sum)
-        for i in xrange(100):
+        global num_requests
+        print 'doing',num_requests,'requests'
+        global start
+        start = time.time()
+        for i in xrange(num_requests):
             yield
-            print 'sending again..'
-            p.callRemote(Sum, a=i, b=1).addCallback(self.got_sum)
+            #print 'sending again..'
+            p.callRemote(Sum, a=i, b=0).addCallback(self.got_sum)
             #p.transport.loseConnection()
   
     def got_sum(self, result):
-        print 'result',result
+        #print 'result',result
+        global received
+        received += 1        
+        if received == num_requests:
+            global start
+            print 'done',time.time()-start
         #reactor.stop()
     
 if __name__== """__main__""":
