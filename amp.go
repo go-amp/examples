@@ -5,13 +5,23 @@ import "github.com/go-amp/amp"
 import "runtime"
 import "strconv"
 import "flag"
-//import "fmt"
+import "fmt"
 import "time"
+import "sync"
+import "os"
+
+const NUM_REQUESTS int = 100000
+var test_start time.Time
+var responses_mutex = &sync.Mutex{}
+var responses_back int = 0
+var isClient *bool
+var isServer *bool
 
 func KeepAlive() {
     for { 
         runtime.Gosched()
         time.Sleep(1 * time.Second) 
+        if *isClient { log.Println("responses_back",responses_back) }
     }
 }
 
@@ -29,10 +39,10 @@ func SumRespond(self *amp.Command) {
         a, _ := strconv.Atoi(m["a"])
         b, _ := strconv.Atoi(m["b"])
         total := a + b        
-        log.Println("SumRespond:",a,"+",b,"=",total)
+        //log.Println("SumRespond:",a,"+",b,"=",total)
         answer := *ask.Response
         answer["total"] = strconv.Itoa(total)
-        log.Println("SumRespond sending",ask)
+        //log.Println("SumRespond sending",ask)
         ask.ReplyChannel <- ask       
         //runtime.Gosched()
     }
@@ -70,7 +80,7 @@ func RemoteSum(a int, b int, c *amp.Client, command *amp.Command) (string, error
     go RemoteTrap(reply)   
     callbox.Callback = reply
     callbox.Command = command    
-    log.Println("CallRemote",callbox.Command.Name,*callbox.Arguments)
+    //log.Println("CallRemote",callbox.Command.Name,*callbox.Arguments)
     tag, err := c.CallRemote(callbox)         
     return tag, err
 }
@@ -78,7 +88,17 @@ func RemoteSum(a int, b int, c *amp.Client, command *amp.Command) (string, error
 func RemoteTrap(reply chan *amp.CallBox) {
     //log.Println("remote trapping",reply)    
     answer := <-reply
-    log.Println("RemoteTrap",*answer.Response,"for",*answer.Arguments)
+    
+    //m := *answer.Response
+    //a, _ := strconv.Atoi(m["total"])
+    responses_mutex.Lock()
+    responses_back++    
+    //log.Println("RemoteTrap",*answer.Response,"for",*answer.Arguments,"responses_back",responses_back)
+    if responses_back == NUM_REQUESTS {
+        now := time.Now()
+        fmt.Printf("time taken -- %f\n", float32(now.Sub(test_start))/1000000000.0)
+    }
+    responses_mutex.Unlock()
     amp.RecycleCallBox(answer)
     //log.Println("done recycling callbox")
 }
@@ -90,24 +110,34 @@ func client() {
     commands[sum.Name] = sum
     prot := amp.Init(&commands)
     c, err := prot.ConnectTCP("127.0.0.1:8000")
-    if err != nil { log.Println(err) } else {         
-        for i := 1; i < 1000000; i++ {
-            log.Println("client iteration -",i)
-            _, err := RemoteSum(i, 1, c, sum)
+    if err != nil { log.Println(err) } else {  
+        test_start = time.Now()       
+        log.Println("sending",NUM_REQUESTS,"requests")
+        for i := 1; i <= NUM_REQUESTS; i++ {
+            //log.Println("client iteration -",i)
+            _, err := RemoteSum(i, 0, c, sum)
             if err != nil { log.Println(err); break }                   
+            runtime.Gosched()
         }
+        log.Println("done")
+        //log.Println("responses_back",responses_back)
         KeepAlive() 
-    }
-    
+    }    
 }
 
+
+
 func main() {
-    isServer := flag.Bool("server", false, "use as a server")
-    isClient := flag.Bool("client", false, "use as a client")
+    isServer = flag.Bool("server", false, "use as a server")
+    isClient = flag.Bool("client", false, "use as a client")
+    //log.Println("isServer",isServer)
     flag.Parse()    
     if *isServer {
         server()
     } else if *isClient {
+        f, err := os.Create("/tmp/logfile")
+        log.Println("err",err,f)
+        //log.SetOutput(f)
         client()
     } else { flag.Usage() }            
 }
