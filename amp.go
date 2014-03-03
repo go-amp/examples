@@ -40,7 +40,7 @@ func init() {
 }
 
 func SumRespond(self *amp.Command) {
-    for {        
+    for ask := range self.Responder {        
         ask := <- self.Responder
         if ask == nil { log.Println("ask is nil") } 
         //log.Println(ask)
@@ -49,8 +49,8 @@ func SumRespond(self *amp.Command) {
         //b, _ := strconv.Atoi(m["b"])
         //total := a + b        
         ////log.Println("SumRespond:",a,"+",b,"=",total)
-        answer := make(map[string]string)
-        answer["total"] = "11" //strconv.Itoa(total)
+        //answer := make(map[string]string)
+        //answer["total"] = "11" //strconv.Itoa(total)
         ////log.Println("SumRespond sending",ask)
         //responses_mutex.Lock()
         //requests_count++
