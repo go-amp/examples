@@ -10,7 +10,7 @@ import "time"
 import "sync"
 import "os"
 
-const NUM_REQUESTS int = 100000
+var NUM_REQUESTS *int
 var test_start time.Time
 var responses_mutex = &sync.Mutex{}
 var responses_back int = 0
@@ -95,7 +95,7 @@ func RemoteTrap(reply chan *amp.CallBox) {
     responses_mutex.Lock()
     responses_back++    
     //log.Println("RemoteTrap",*answer.Response,"for",*answer.Arguments,"responses_back",responses_back)
-    if responses_back == NUM_REQUESTS {
+    if responses_back == *NUM_REQUESTS {
         now := time.Now()
         fmt.Printf("time taken -- %f\n", float32(now.Sub(test_start))/1000000000.0)
     }
@@ -112,18 +112,22 @@ func client() {
     prot := amp.Init(&commands)
     c, err := prot.ConnectTCP(*isClientHost)
     if err != nil { log.Println(err) } else {  
-        test_start = time.Now()       
-        log.Println("sending",NUM_REQUESTS,"requests")
-        for i := 1; i <= NUM_REQUESTS; i++ {
-            //log.Println("client iteration -",i)
-            _, err := RemoteSum(i, 0, c, sum)
-            if err != nil { log.Println(err); break }                   
-            runtime.Gosched()
-        }
-        log.Println("done")
+        go send_requests(c, sum)
         //log.Println("responses_back",responses_back)
         KeepAlive() 
     }    
+}
+
+func send_requests(c *amp.Client, sum *amp.Command) {
+    test_start = time.Now()       
+    log.Println("sending",*NUM_REQUESTS,"requests")
+    for i := 1; i <= *NUM_REQUESTS; i++ {
+        //log.Println("client iteration -",i)
+        _, err := RemoteSum(i, 0, c, sum)
+        if err != nil { log.Println(err); break }                   
+        runtime.Gosched()
+    }
+    log.Println("done sending")
 }
 
 
@@ -132,6 +136,7 @@ func main() {
     isServer = flag.Bool("server", false, "use as a server")
     isClient = flag.Bool("client", false, "use as a client")
     isClientHost = flag.String("host","127.0.0.1:8000","host address")
+    NUM_REQUESTS = flag.Int("num",100000,"number of requests to do")
     //log.Println("isServer",isServer)
     flag.Parse()    
     if *isServer {
