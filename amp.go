@@ -49,8 +49,8 @@ func SumRespond(self *amp.Command) {
         //b, _ := strconv.Atoi(m["b"])
         //total := a + b        
         ////log.Println("SumRespond:",a,"+",b,"=",total)
-        //answer := *ask.Response
-        //answer["total"] = "11" //strconv.Itoa(total)
+        answer := *ask.Response
+        answer["total"] = "11" //strconv.Itoa(total)
         ////log.Println("SumRespond sending",ask)
         //responses_mutex.Lock()
         //requests_count++
