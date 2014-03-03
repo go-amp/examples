@@ -54,7 +54,7 @@ func SumRespond(self *amp.Command) {
         responses_mutex.Lock()
         requests_count++
         responses_mutex.Unlock()
-        ask.ReplyChannel <- ask       
+        //ask.ReplyChannel <- ask       
         //runtime.Gosched()
     }
 }
