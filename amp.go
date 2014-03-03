@@ -41,19 +41,19 @@ func init() {
 
 func SumRespond(self *amp.Command) {
     for {        
-        ask := <- self.Responder
+        _ := <- self.Responder
         //log.Println(ask)
         //m := *ask.Arguments        
         //a, _ := strconv.Atoi(m["a"])
         //b, _ := strconv.Atoi(m["b"])
         //total := a + b        
         ////log.Println("SumRespond:",a,"+",b,"=",total)
-        answer := *ask.Response
-        answer["total"] = "11" //strconv.Itoa(total)
-        //log.Println("SumRespond sending",ask)
-        responses_mutex.Lock()
-        requests_count++
-        responses_mutex.Unlock()
+        //answer := *ask.Response
+        //answer["total"] = "11" //strconv.Itoa(total)
+        ////log.Println("SumRespond sending",ask)
+        //responses_mutex.Lock()
+        //requests_count++
+        //responses_mutex.Unlock()
         //ask.ReplyChannel <- ask       
         //runtime.Gosched()
     }
