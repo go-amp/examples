@@ -40,7 +40,7 @@ func init() {
 }
 
 func SumRespond(self *amp.Command) {
-    for {        
+    select {        
         ask := <- self.Responder
         if ask == nil { log.Println("ask is nil") } 
         //log.Println(ask)
