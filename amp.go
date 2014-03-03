@@ -14,6 +14,8 @@ var NUM_REQUESTS *int
 var test_start time.Time
 var responses_mutex = &sync.Mutex{}
 var responses_back int = 0
+var requests_count int = 0
+var sent_count int = 0
 var isClient *bool
 var isServer *bool
 var isClientHost *string
@@ -22,7 +24,8 @@ func KeepAlive() {
     for { 
         runtime.Gosched()
         time.Sleep(1 * time.Second) 
-        if *isClient { log.Println("responses_back",responses_back) }
+        if *isClient { log.Println("sent",sent_count,"responses_back",responses_back) 
+        } else { log.Println("requests",requests_count) }
     }
 }
 
@@ -44,6 +47,7 @@ func SumRespond(self *amp.Command) {
         answer := *ask.Response
         answer["total"] = strconv.Itoa(total)
         //log.Println("SumRespond sending",ask)
+        requests_count++
         ask.ReplyChannel <- ask       
         //runtime.Gosched()
     }
@@ -126,6 +130,7 @@ func send_requests(c *amp.Client, sum *amp.Command) {
         _, err := RemoteSum(i, 0, c, sum)
         if err != nil { log.Println(err); break }                   
         runtime.Gosched()
+        sent_count++
     }
     log.Println("done sending")
 }
