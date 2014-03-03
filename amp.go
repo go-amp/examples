@@ -41,7 +41,7 @@ func init() {
 
 func SumRespond(self *amp.Command) {
     for ask := range self.Responder {        
-        ask := <- self.Responder
+        //ask := <- self.Responder
         if ask == nil { log.Println("ask is nil") } 
         //log.Println(ask)
         //m := *ask.Arguments        
