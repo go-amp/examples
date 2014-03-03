@@ -41,7 +41,8 @@ func init() {
 
 func SumRespond(self *amp.Command) {
     for {        
-        <- self.Responder
+        ask := <- self.Responder
+        if ask = nil { log.Println("ask is nil") } 
         //log.Println(ask)
         //m := *ask.Arguments        
         //a, _ := strconv.Atoi(m["a"])
