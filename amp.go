@@ -67,7 +67,7 @@ func BuildSumCommand() *amp.Command {
     arguments := [2]string{ "a", "b" }
     response := [1]string{ "total" }    
     name := "Sum"
-    responder := make(chan *amp.Ask, 100)
+    responder := make(chan *amp.Ask)
     sumCommand := &amp.Command{name, responder, arguments[:], response[:]}    
     go SumRespond(sumCommand)
     return sumCommand
