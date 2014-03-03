@@ -16,6 +16,7 @@ var responses_mutex = &sync.Mutex{}
 var responses_back int = 0
 var isClient *bool
 var isServer *bool
+var isClientHost *string
 
 func KeepAlive() {
     for { 
@@ -109,7 +110,7 @@ func client() {
     sum := BuildSumCommand()
     commands[sum.Name] = sum
     prot := amp.Init(&commands)
-    c, err := prot.ConnectTCP("127.0.0.1:8000")
+    c, err := prot.ConnectTCP(*isClientHost)
     if err != nil { log.Println(err) } else {  
         test_start = time.Now()       
         log.Println("sending",NUM_REQUESTS,"requests")
@@ -130,6 +131,7 @@ func client() {
 func main() {
     isServer = flag.Bool("server", false, "use as a server")
     isClient = flag.Bool("client", false, "use as a client")
+    isClientHost = flag.String("host","127.0.0.1:8000","host address")
     //log.Println("isServer",isServer)
     flag.Parse()    
     if *isServer {
