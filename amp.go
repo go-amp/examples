@@ -15,6 +15,7 @@ var test_start time.Time
 var responses_mutex = &sync.Mutex{}
 var responses_back int = 0
 var requests_count int = 0
+var previous int = 0
 var sent_count int = 0
 var isClient *bool
 var isServer *bool
@@ -24,7 +25,10 @@ func KeepAlive() {
     for { 
         runtime.Gosched()
         time.Sleep(1 * time.Second) 
-        if *isClient { log.Println("sent",sent_count,"responses_back",responses_back) 
+        if *isClient { 
+            log.Println("sent",sent_count,"responses_back",responses_back) 
+            //if previous != 0 && previous != *NUM_REQUESTS && responses_back == previous { log.Panic("ouch") }
+            previous = responses_back
         } else { log.Println("requests",requests_count) }
     }
 }
@@ -128,9 +132,10 @@ func send_requests(c *amp.Client, sum *amp.Command) {
     for i := 1; i <= *NUM_REQUESTS; i++ {
         //log.Println("client iteration -",i)
         _, err := RemoteSum(i, 0, c, sum)
-        if err != nil { log.Println(err); break }                   
+        if err != nil { log.Println(err) 
+        } else { sent_count++ }
         runtime.Gosched()
-        sent_count++
+        
     }
     log.Println("done sending")
 }
