@@ -67,7 +67,7 @@ func server() {
     sum := BuildSumCommand()
     commands[sum.Name] = sum
     prot := amp.Init(&commands)    
-    err := prot.ListenTCP("127.0.0.1:8000")
+    err := prot.ListenTCP(":8000")
     if err != nil { log.Println(err) } else { KeepAlive() }
 }
 
@@ -109,7 +109,7 @@ func client() {
     sum := BuildSumCommand()
     commands[sum.Name] = sum
     prot := amp.Init(&commands)
-    c, err := prot.ConnectTCP("127.0.0.1:8000")
+    c, err := prot.ConnectTCP("54.80.211.59:8000")
     if err != nil { log.Println(err) } else {  
         test_start = time.Now()       
         log.Println("sending",NUM_REQUESTS,"requests")
