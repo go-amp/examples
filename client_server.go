@@ -48,10 +48,10 @@ func do_sum(in chan *amp.AskBox) {
     }
 }
 
-func response_trap(in chan *amp.CallBox) { 
-    for reply := range in {
+func response_trap(in chan map[string][]byte) { 
+    for _ = range in {
         //log.Println(*reply.Response)
-        amp.RecycleCallBox(reply)
+        //amp.RecycleCallBox(reply)
         received_back++
         if received_back == *NUM_REQUESTS {
             done = true
@@ -71,16 +71,18 @@ func client() {
 }
 
 func send_requests(c *amp.Client) {
-    replies := make(chan *amp.CallBox)
+    replies := make(chan map[string][]byte)
     go response_trap(replies)
     startTime = time.Now()   
     for i := 1; i <= *NUM_REQUESTS; i++ {
         //send := []byte{0,1,97,0,6,54,54,50,55,49,54,0,1,98,0,1,48,0,4,95,97,115,107,0,5,97,49,99,98,99,0,8,95,99,111,109,109,97,110,100,0,3,83,117,109,0,0}
         //log.Println("writing",send)
-        box := amp.ResourceCallBox()
-        box.Args["i"] = []byte("hi there!")
-        box.Callback = replies
-        err := c.CallRemote(SUM_COMMAND, box)
+        //box := amp.ResourceCallBox()
+        //box.Args["i"] = []byte("hi there!")
+        //box.Callback = replies
+        m := make(map[string][]byte)
+        m["i"] = []byte("hi there!")
+        err := c.CallRemote(SUM_COMMAND, m, replies)
         //_, err := c.Conn.Write(send)
         if err != nil { log.Println("err",err); break }
         sent_count++
