@@ -18,14 +18,15 @@ var requests_count int = 0
 var received_back int = 0
 var startTime time.Time
 const SUM_COMMAND string = "Sum"
+var done = false
 
 func KeepAlive() {
     for { 
         runtime.Gosched()
         time.Sleep(1 * time.Second) 
-        if *isClient { 
+        if *isClient && !done { 
             log.Println("sent",sent_count,"received_back",received_back)             
-        } else { log.Println("requests",requests_count) }
+        } else {  }
     }
 }
 
@@ -53,6 +54,7 @@ func response_trap(in chan *amp.CallBox) {
         amp.RecycleCallBox(reply)
         received_back++
         if received_back == *NUM_REQUESTS {
+            done = true
             endTime := time.Now()
             log.Println("ElapsedTime:", endTime.Sub(startTime))
             close(in)
