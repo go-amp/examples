@@ -21,7 +21,7 @@ const SUM_COMMAND string = "Sum"
 var done = false
 
 func init() {
-    procs := runtime.NumCPU()
+    procs := 1 //runtime.NumCPU()
     log.Println("setting GOMAXPROCS to",procs)
     runtime.GOMAXPROCS(procs)
 }
