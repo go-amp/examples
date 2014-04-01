@@ -5,7 +5,7 @@ from twisted.internet.protocol import Factory
 import sys
 import time
 
-num_requests = 100000
+num_requests = 1000
 received = 0
 start = time.time()
 
