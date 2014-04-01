@@ -20,6 +20,12 @@ var startTime time.Time
 const SUM_COMMAND string = "Sum"
 var done = false
 
+func init() {
+    procs := runtime.NumCPU()
+    log.Println("setting GOMAXPROCS to",procs)
+    runtime.GOMAXPROCS(procs)
+}
+
 func KeepAlive() {
     for { 
         runtime.Gosched()
